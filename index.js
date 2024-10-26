@@ -66,11 +66,11 @@ app.post("/api/users/:_id/exercises", (req, res) => {
       if (!user) {
         return res.json({ error: "User not found" });
       }
-
+      let noStringDate = req.body.date ? new Date(req.body.date) : new Date();
       const exerciseData = {
         description: req.body.description,
         duration: req.body.duration,
-        date: req.body.date ? new Date(req.body.date) : new Date(),
+        date: noStringDate.toDateString(),
       };
 
       user.count += 1;
@@ -79,11 +79,12 @@ app.post("/api/users/:_id/exercises", (req, res) => {
       return user.save();
     })
     .then((user) => {
+      let noStringDate = req.body.date ? new Date(req.body.date) : new Date();
       res.json({
         _id: user._id,
         username: user.username,
-        date: req.body.date,
-        duration: req.body.date ? new Date(req.body.date) : new Date(),
+        date: noStringDate.toDateString(),
+        duration: req.body.duration,
         description: req.body.description,
       });
     });
