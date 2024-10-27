@@ -92,13 +92,17 @@ app.get("/api/users", (req, res) => {
 });
 
 app.get("/api/users/:_id/logs", (req, res) => {
-  Excercises.find({ userId: req.params }).then((exercise) => {
+  Excercises.find({ userId: req.params._id }).then((exercise) => {
     Users.findById(req.params).then((user) => {
       res.json({
         _id: user._id,
         username: user.username,
         count: exercise.length,
-        log: exercise,
+        log: exercise.map((ex) => ({
+          description: ex.description,
+          duration: ex.duration,
+          date: ex.date,
+        })),
       });
     });
   });
