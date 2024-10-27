@@ -63,12 +63,11 @@ app.post("/api/users", (req, res) => {
 // response  {"_id":"671d49b019a7460013b5abf4","username":"gastoncito","date":"Sun Feb 02 1997","duration":5,"description":"asdasd"}
 
 app.post("/api/users/:_id/exercises", (req, res) => {
-  let noStringDate = req.body.date ? new Date(req.body.date) : new Date();
   const newExercise = new Excercises({
     userId: req.params._id,
     description: req.body.description,
     duration: req.body.duration,
-    date: noStringDate.toDateString(),
+    date: req.body.date ? new Date(req.body.date) : new Date(),
   });
 
   newExercise.save();
@@ -77,7 +76,7 @@ app.post("/api/users/:_id/exercises", (req, res) => {
     res.json({
       _id: newExercise.userId,
       username: user.username,
-      date: newExercise.date,
+      date: newExercise.date.toString(),
       duration: newExercise.duration,
       description: newExercise.description,
     });
@@ -95,12 +94,22 @@ app.get("/api/users/:_id/logs", (req, res) => {
   Excercises.find({ userId: req.params._id }).then((exercise) => {
     Users.findById(req.params).then((user) => {
       const userCopy = user.toObject();
+      const { from, to, limit } = req.query;
 
-      userCopy.count = exercise.length;
-      userCopy.log = exercise.map((ex) => ({
+      filtredExercise = exercise.filter((ex) => {
+        let exercisesFrom = from ? new Date(from) : new Date(0);
+        let exercisesTo = to ? new Date(to) : new Date();
+
+        return ex.date >= exercisesFrom && ex.date <= exercisesTo;
+      });
+
+      limitedExercise = filtredExercise.slice(0, parseInt(limit));
+
+      userCopy.count = limitedExercise.length;
+      userCopy.log = limitedExercise.map((ex) => ({
         description: ex.description,
         duration: ex.duration,
-        date: ex.date,
+        date: ex.date.toString(),
       }));
 
       res.json(userCopy);
