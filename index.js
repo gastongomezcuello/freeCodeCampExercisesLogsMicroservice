@@ -65,7 +65,7 @@ app.post("/api/users", (req, res) => {
 app.post("/api/users/:_id/exercises", (req, res) => {
   let noStringDate = req.body.date ? new Date(req.body.date) : new Date();
   const newExercise = new Excercises({
-    userId: req.body._id,
+    userId: req.params._id,
     description: req.body.description,
     duration: req.body.duration,
     date: noStringDate.toDateString(),
@@ -73,7 +73,7 @@ app.post("/api/users/:_id/exercises", (req, res) => {
 
   newExercise.save();
 
-  Users.findById(req.body._id).then((user) => {
+  Users.findById(req.params._id).then((user) => {
     res.json({
       _id: newExercise.userId,
       username: user.username,
