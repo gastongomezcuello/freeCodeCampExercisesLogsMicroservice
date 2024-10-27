@@ -63,7 +63,7 @@ app.post("/api/users", (req, res) => {
 // response  {"_id":"671d49b019a7460013b5abf4","username":"gastoncito","date":"Sun Feb 02 1997","duration":5,"description":"asdasd"}
 
 app.post("/api/users/:_id/exercises", (req, res) => {
-  let noStringDate = new Date(req.body.date);
+  let noStringDate = req.body.date ? new Date(req.body.date) : new Date();
   const newExercise = new Excercises({
     userId: req.body._id,
     description: req.body.description,
@@ -94,16 +94,16 @@ app.get("/api/users", (req, res) => {
 app.get("/api/users/:_id/logs", (req, res) => {
   Excercises.find({ userId: req.params._id }).then((exercise) => {
     Users.findById(req.params).then((user) => {
-      res.json({
-        _id: user._id,
-        username: user.username,
-        count: exercise.length,
-        log: exercise.map((ex) => ({
-          description: ex.description,
-          duration: ex.duration,
-          date: ex.date,
-        })),
-      });
+      const userCopy = user.toObject();
+
+      userCopy.count = exercise.length;
+      userCopy.log = exercise.map((ex) => ({
+        description: ex.description,
+        duration: ex.duration,
+        date: ex.date,
+      }));
+
+      res.json(userCopy);
     });
   });
 });
