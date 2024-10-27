@@ -24,30 +24,32 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true,
 });
 
-const exercisesSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true,
   },
-  count: Number,
-  log: [
-    {
-      description: String,
-      duration: Number,
-      date: String,
-    },
-  ],
 });
+const exercisesSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  description: String,
+  duration: Number,
+  date: String,
+});
+
+const Users = mongoose.model("Users", userSchema);
 
 const Excercises = mongoose.model("Excercises", exercisesSchema);
 
 // response user
 
 app.post("/api/users", (req, res) => {
-  const newUser = new Excercises({
+  const newUser = new Users({
     username: req.body.username,
-    count: 0,
-    log: [],
   });
 
   newUser.save();
@@ -61,48 +63,43 @@ app.post("/api/users", (req, res) => {
 // response  {"_id":"671d49b019a7460013b5abf4","username":"gastoncito","date":"Sun Feb 02 1997","duration":5,"description":"asdasd"}
 
 app.post("/api/users/:_id/exercises", (req, res) => {
-  Excercises.findById(req.params._id)
-    .then((user) => {
-      if (!user) {
-        return res.json({ error: "User not found" });
-      }
-      let noStringDate = req.body.date ? new Date(req.body.date) : new Date();
-      const exerciseData = {
-        description: req.body.description,
-        duration: req.body.duration,
-        date: noStringDate.toDateString(),
-      };
+  let noStringDate = new Date(req.body.date);
+  const newExercise = new Excercises({
+    userId: req.body._id,
+    description: req.body.description,
+    duration: req.body.duration,
+    date: noStringDate.toDateString(),
+  });
 
-      user.count += 1;
-      user.log.push(exerciseData);
+  newExercise.save();
 
-      return user.save();
-    })
-    .then((user) => {
-      let noStringDate = req.body.date ? new Date(req.body.date) : new Date();
+  Users.findById(req.body._id).then((user) => {
+    res.json({
+      _id: newExercise.userId,
+      username: user.username,
+      date: newExercise.date,
+      duration: newExercise.duration,
+      description: newExercise.description,
+    });
+  });
+});
+//response logs  {"_id":"671d49b019a7460013b5abf4","username":"gastoncito","count":1,"log":[{"description":"asdasd","duration":5,"date":"Sun Feb 02 1997"}]}
+
+app.get("/api/users", (req, res) => {
+  Users.find().then((users) => {
+    res.json(users);
+  });
+});
+
+app.get("/api/users/:_id/logs", (req, res) => {
+  Excercises.find({ userId: req.params }).then((exercise) => {
+    Users.findById(req.params).then((user) => {
       res.json({
         _id: user._id,
         username: user.username,
-        date: noStringDate.toDateString(),
-        duration: req.body.duration,
-        description: req.body.description,
+        count: exercise.length,
+        log: exercise,
       });
-    });
-});
-
-//response logs  {"_id":"671d49b019a7460013b5abf4","username":"gastoncito","count":1,"log":[{"description":"asdasd","duration":5,"date":"Sun Feb 02 1997"}]}
-
-app.get("/api/users/:_id/logs", (req, res) => {
-  Excercises.findById(req.params._id).then((user) => {
-    if (!user) {
-      return res.json({ error: "User not found" });
-    }
-
-    res.json({
-      _id: user._id,
-      username: user.username,
-      count: user.count,
-      log: user.log,
     });
   });
 });
