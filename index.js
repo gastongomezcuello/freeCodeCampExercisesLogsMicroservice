@@ -63,7 +63,7 @@ app.post("/api/users", (req, res) => {
 // response  {"_id":"671d49b019a7460013b5abf4","username":"gastoncito","date":"Sun Feb 02 1997","duration":5,"description":"asdasd"}
 
 app.post("/api/users/:_id/exercises", (req, res) => {
-  let noStringDate = new Date(req.body.date);
+  let noStringDate = req.body.date ? new Date(req.body.date) : new Date();
   const newExercise = new Excercises({
     userId: req.params._id,
     description: req.body.description,
