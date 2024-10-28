@@ -94,11 +94,22 @@ app.get("/api/users", (req, res) => {
 app.get("/api/users/:_id/logs", (req, res) => {
   Excercises.find({ userId: req.params._id }).then((exercise) => {
     Users.findById(req.params._id).then((user) => {
+      const {from, to, limit} = req.query;
+
+      filtredExercise = exercise.filter((ex) => {
+        let exercisesFrom = from ? new Date(from) : new Date(0);
+        let exercisesTo = to ? new Date(to) : new Date();
+
+        return ex.date >= exercisesFrom && ex.date <= exercisesTo;
+      });
+
+      limitedExercise = filtredExercise.slice(0, parseInt(limit));
+
       res.json({
         _id: user._id,
         username: user.username,
-        count: exercise.length,
-        log: exercise.map((ex) => ({
+        count: limitedExercise.length,
+        log: limitedExercise.map((ex) => ({
           description: ex.description,
           duration: ex.duration,
           date: ex.date,
